@@ -4,6 +4,9 @@
 #include <iostream>
 #include <iomanip>
 #include <conio.h>
+#include <thread>
+#include <mutex>
+#include <cstdlib>
 
 using namespace std;
 enum Positions { UP=-1, DOWN=1 };
@@ -70,22 +73,36 @@ public:
 		return COUT;
 	}
 };
+
+//class Asteroids
+//{
+//@todo - napraviti enemy objekte
+//};
 #pragma endregion
+
+
+
+
+
 //BASE OBJECT
 
 //template<class T>
+mutex mtx;
 class Map
 {
 protected:
 	//T **_map;
 	char** _map;
-	int *_vertical;
-	int *_horizontal; //it refers for length of lines
+
+	int* _vertical;
+	int* _horizontal; //it refers for length of lines
 	int* _positionOfObjectY;
 	int* _positionOfObjectX;
 	int* _length;
 	int _move;
+	bool _isEnd;
 	SpaceShuttle* _shtl;
+	
 	void PrintMap()
 	{
 		for (size_t i = 0; i < *_vertical; i++)
@@ -108,19 +125,113 @@ protected:
 		cout << endl;
 
 	}
-	//velicina objekta
-	//pozicija objekta?
+
+
+	/*void ExpandArray(int length)
+	{
+		char** temp = new char* [*_vertical];
+		for (size_t i = 0; i < length; i++)
+			temp[i] = new char[length + 1];
+
+		if (_asteroids!=nullptr)
+		delete[] _asteroids;
+
+		_asteroids = temp;
+
+	}
+	*/
+	void MoveAsteroids()
+	{
+		
+		char** temp = new char*[*_vertical];
+	/*	int brojac = 0;
+		brojac++*/;
+		for (size_t i = 0; i < *_vertical; i++)
+		{
+			temp[i] = new char[*_horizontal];
+		}
+
+		for (size_t i = 0; i < *_vertical; i++)
+		{
+			
+			for (size_t j = *_horizontal; j > 0; j--)
+			{
+			
+
+				if (j == *_positionOfObjectY && i == *_positionOfObjectX)
+					temp[*_positionOfObjectX][*_positionOfObjectY] = _map[*_positionOfObjectX][*_positionOfObjectY];
+				else if (j - 1 != -1)
+					temp[i][j - 1] = _map[i][j];
+				else if (i == 0)
+					delete[] temp[i];
+				
+			}
+		}
+		delete[] _map;
+		_map = temp;
+
+	}
 	//negativni objekti
+	void CreateAsteroids(int lengthOfAsteroidRain = 0)
+	{
+
+
+		int brojac = 0;
+		int randPosition = 1 + (rand() % (*_vertical - 2));
+		int randLength = 1 + (rand() % (*_horizontal - 2));
+		if (!_isEnd)
+		{
+			//	ExpandArray(lengthOfAsteroidRain);
+				//if (lengthOfAsteroidRain > 1)
+				//MoveAsteroids(lengthOfAsteroidRain);
+			//	_asteroids[0][lengthOfAsteroidRain-1] = '@';
+
+			//if (lengthOfAsteroidRain % 7 == 0)
+			if (lengthOfAsteroidRain < *_horizontal)
+			{
+			
+				lengthOfAsteroidRain++;
+
+				for (size_t i = 0; i < *_vertical; i++)
+				{
+
+						//for(size_t j = lengthOfAsteroidRain-1; j >= 0; j++)
+				
+					for (size_t j = 0; j < lengthOfAsteroidRain; j++)
+					{
+
+						//cout << randPosition << endl;
+						if (_map[i][*_horizontal - j] != '@')
+							_map[i][*_horizontal - j] = ' ';
+
+						if (lengthOfAsteroidRain % 7 == 0)
+							if (i == randPosition)
+								_map[i][*_horizontal - 2] = '@';
+
+
+					}
+					
+				}
+			}
+			
+					MoveAsteroids();
+			brojac++;
+
+		}
+	
+
+
+	}
 public:
 	Map()
 	{
 		_vertical = new int(50);
 		_horizontal = new int(200);
+		_isEnd = false;
 		_map = new char*[*_vertical];
 		for (size_t i = 0; i < *_vertical; i++)
-		{
 			_map[i] = new char[*_horizontal];
-		}
+	
 
 		for (size_t i = 0; i < *_vertical; i++)
 			for (size_t j = 0; j < *_horizontal; j++)
@@ -135,6 +246,7 @@ public:
 		_vertical = new int(25);
 		_horizontal = new int(100);
 		_map = new char* [*_vertical];
+		_isEnd = false;
 		for (size_t i = 0; i < *_vertical; i++)
 		{
 			_map[i] = new char[*_horizontal];
@@ -162,7 +274,7 @@ public:
 
 		for (size_t i = 0; i < length-1; i++)
 		{
-		_map[positionX][positionY+i] = obj.GetCharOfShuttle(i); //@todo - napraviti pokazivac na poziciju space shuttle - a; napraviti kretanje (GORE - DOLJE)
+		_map[positionX][positionY+i] = obj.GetCharOfShuttle(i); 
 
 		}
 		
@@ -174,6 +286,18 @@ public:
 		cout << "Kraj -> " << newY << endl;*/
 
 	}
+
+
+		//for (size_t i = 0; i < length; i++)
+		//{
+		//	temp[i + 1] = _asteroids[i];
+		//}
+		//if (_asteroids != nullptr)
+		//	delete[] _asteroids;
+
+		//_asteroids = temp;
+
+	
 	void Draw()
 	{
 		for (size_t i = 0; i < *_vertical; i++)
@@ -187,13 +311,11 @@ public:
 		}
 	}
 
-
-
-	void ChangePosition(int position = 1)
+	void ChangePosition(int moving)
 	{
 
 		
-		
+		int counter = 0; 
 		_move = Moving();
 	/*	if (_positionOfObjectY != nullptr)
 			_positionOfObjectY = nullptr;*/
@@ -213,8 +335,12 @@ public:
 		else if (_move == -1)
 			*_positionOfObjectX -= 1;
 		}
-		else
-			cout << "Greska" << endl;
+		/*
+		thread asteroidRain(&Map::CreateAsteroids, this, moving);
+		asteroidRain.join();*/
+	//	if (moving%7==0)
+		CreateAsteroids(moving);
+		
 
 		cout << _move;
 
@@ -223,7 +349,10 @@ public:
 
 	}
 	
-
+	int GetWidth()
+	{
+		return *_horizontal;
+	}
 	int GetHeight()
 	{
 		return *_vertical;
@@ -233,7 +362,16 @@ public:
 
 	~Map()
 	{
-		
+		//char** _map;
+		//char** _asteroids;
+		//int* _vertical;
+		//int* _horizontal; //it refers for length of lines
+		//int* _positionOfObjectY;
+		//int* _positionOfObjectX;
+		//int* _length;
+		//int _move;
+		//bool _isEnd;
+		//SpaceShuttle* _shtl;
 		for (size_t i = 0; i < *_vertical; i++)
 		{
 			_map[i] = nullptr;
@@ -242,8 +380,11 @@ public:
 		_map = nullptr;
 		delete[] _map;
 
-	//	delete[] _positionOfObjectY;
-	//	 _positionOfObjectY = nullptr;
+
+		
+		 _positionOfObjectY = nullptr;
+		 _positionOfObjectX = nullptr;
+
 	
 		 _length = nullptr;
 
@@ -260,7 +401,7 @@ int Moving()
 	{
 		switch (_getch())
 		{
-		case 'a': case KEY_UP:
+		case 'w': case KEY_UP:
 			return UP;
 		case 's': case KEY_DOWN:
 			return DOWN;
@@ -272,6 +413,9 @@ int Moving()
 	}
 }
 };
+
+
+
 void main()
 {
 	SpaceShuttle novi;
@@ -280,19 +424,22 @@ void main()
 	mapa.Draw();
 	int position = 1;
 	int oldPosition = 1;
+	int kretanje = 0;
 	while (true)
 	{
 
-
 		//if (Moving() > 0 && Moving() <= mapa.GetHeight() - 2 && Moving() != oldPosition)
 		//if (position > 0 && position <= mapa.GetHeight() - 2 && position != oldPosition)
-		{
+		
+		kretanje++;
 
-			mapa.ChangePosition();
+			mapa.ChangePosition(kretanje);
 			system("cls");
 			mapa.Draw();
+			if (kretanje == mapa.GetWidth())
+				kretanje = 0;
 			oldPosition = position;
-		}
+		
 	/*	else
 			cout << "Greska" << endl;*/
 	}
